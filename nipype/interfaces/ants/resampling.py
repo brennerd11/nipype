@@ -247,7 +247,8 @@ class ApplyTransformsInputSpec(ANTSCommandInputSpec):
                                                           traits.Float())
                                              )
     transforms = InputMultiPath(
-        File(exists=True), argstr='%s', mandatory=True, desc='transform files')
+        File(exists=True), argstr='%s', mandatory=False, desc='transform files. if empty will use \
+                                                               image header information for transformation.')
     invert_transform_flags = InputMultiPath(traits.Bool())
     default_value = traits.Float(0.0, argstr='--default-value %g', usedefault=True)
     print_out_composite_warp_file = traits.Bool(False, requires=["output_image"],
