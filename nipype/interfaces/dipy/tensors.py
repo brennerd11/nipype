@@ -47,9 +47,9 @@ def tensor_fitting(data, bvals, bvecs, mask_file=None):
     -------
     TensorFit object, affine
     """
-    img = nb.load(in_file).get_data()
+    img = nb.load(in_file)
     data = img.get_data()
-    affine = img.get_affine()
+    affine = img.affine
     if mask_file is not None:
         mask = nb.load(self.inputs.mask_file).get_data()
     else:

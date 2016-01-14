@@ -2,6 +2,7 @@
 from ....testing import assert_equal
 from ..resampling import ApplyTransforms
 
+
 def test_ApplyTransforms_inputs():
     input_map = dict(args=dict(argstr='%s',
     ),
@@ -12,6 +13,8 @@ def test_ApplyTransforms_inputs():
     ),
     environ=dict(nohash=True,
     usedefault=True,
+    ),
+    float=dict(argstr='--float %d',
     ),
     ignore_exception=dict(nohash=True,
     usedefault=True,
@@ -24,6 +27,7 @@ def test_ApplyTransforms_inputs():
     interpolation=dict(argstr='%s',
     usedefault=True,
     ),
+    interpolation_parameters=dict(),
     invert_transform_flags=dict(),
     num_threads=dict(nohash=True,
     usedefault=True,
@@ -51,6 +55,7 @@ def test_ApplyTransforms_inputs():
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(inputs.traits()[key], metakey), value
 
+
 def test_ApplyTransforms_outputs():
     output_map = dict(output_image=dict(),
     )
@@ -59,4 +64,3 @@ def test_ApplyTransforms_outputs():
     for key, metadata in list(output_map.items()):
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(outputs.traits()[key], metakey), value
-

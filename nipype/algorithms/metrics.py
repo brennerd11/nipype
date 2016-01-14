@@ -92,9 +92,9 @@ class Distance(BaseInterface):
         origdata2 = nii2.get_data().astype(np.bool)
         border2 = self._find_border(origdata2)
 
-        set1_coordinates = self._get_coordinates(border1, nii1.get_affine())
+        set1_coordinates = self._get_coordinates(border1, nii1.affine)
 
-        set2_coordinates = self._get_coordinates(border2, nii2.get_affine())
+        set2_coordinates = self._get_coordinates(border2, nii2.affine)
 
         dist_matrix = cdist(set1_coordinates.T, set2_coordinates.T)
         (point1, point2) = np.unravel_index(
@@ -105,12 +105,12 @@ class Distance(BaseInterface):
                 set2_coordinates.T[point2, :])
 
     def _eucl_cog(self, nii1, nii2):
-        origdata1 = nii1.get_data().astype(np.bool)
-        cog_t = np.array(center_of_mass(origdata1)).reshape(-1, 1)
+        origdata1 = np.logical_and(nii1.get_data() != 0, np.logical_not(np.isnan(nii1.get_data())))
+        cog_t = np.array(center_of_mass(origdata1.copy())).reshape(-1, 1)
         cog_t = np.vstack((cog_t, np.array([1])))
-        cog_t_coor = np.dot(nii1.get_affine(), cog_t)[:3, :]
+        cog_t_coor = np.dot(nii1.affine, cog_t)[:3, :]
 
-        origdata2 = nii2.get_data().astype(np.bool)
+        origdata2 = np.logical_and(nii2.get_data() != 0, np.logical_not(np.isnan(nii2.get_data())))
         (labeled_data, n_labels) = label(origdata2)
 
         cogs = np.ones((4, n_labels))
@@ -119,7 +119,7 @@ class Distance(BaseInterface):
             cogs[:3, i] = np.array(center_of_mass(origdata2,
                                                   labeled_data, i + 1))
 
-        cogs_coor = np.dot(nii2.get_affine(), cogs)[:3, :]
+        cogs_coor = np.dot(nii2.affine, cogs)[:3, :]
 
         dist_matrix = cdist(cog_t_coor.T, cogs_coor.T)
 
@@ -131,8 +131,8 @@ class Distance(BaseInterface):
 
         origdata2 = nii2.get_data().astype(np.bool)
 
-        set1_coordinates = self._get_coordinates(border1, nii1.get_affine())
-        set2_coordinates = self._get_coordinates(origdata2, nii2.get_affine())
+        set1_coordinates = self._get_coordinates(border1, nii1.affine)
+        set2_coordinates = self._get_coordinates(origdata2, nii2.affine)
 
         dist_matrix = cdist(set1_coordinates.T, set2_coordinates.T)
         min_dist_matrix = np.amin(dist_matrix, axis=0)
@@ -172,8 +172,8 @@ class Distance(BaseInterface):
         border1 = self._find_border(origdata1)
         border2 = self._find_border(origdata2)
 
-        set1_coordinates = self._get_coordinates(border1, nii1.get_affine())
-        set2_coordinates = self._get_coordinates(border2, nii2.get_affine())
+        set1_coordinates = self._get_coordinates(border1, nii1.affine)
+        set2_coordinates = self._get_coordinates(border2, nii2.affine)
         distances = cdist(set1_coordinates.T, set2_coordinates.T)
         mins = np.concatenate(
             (np.amin(distances, axis=0), np.amin(distances, axis=1)))
@@ -181,8 +181,9 @@ class Distance(BaseInterface):
         return np.max(mins)
 
     def _run_interface(self, runtime):
-        nii1 = nb.load(self.inputs.volume1)
-        nii2 = nb.load(self.inputs.volume2)
+        # there is a bug in some scipy ndimage methods that gets tripped by memory mapped objects
+        nii1 = nb.load(self.inputs.volume1, mmap=False)
+        nii2 = nb.load(self.inputs.volume2, mmap=False)
 
         if self.inputs.method == "eucl_min":
             self._distance, self._point1, self._point2 = self._eucl_min(
@@ -283,8 +284,8 @@ class Overlap(BaseInterface):
         scale = 1.0
 
         if self.inputs.vol_units == 'mm':
-            voxvol = nii1.get_header().get_zooms()
-            for i in range(nii1.get_data().ndim-1):
+            voxvol = nii1.header.get_zooms()
+            for i in range(nii1.get_data().ndim - 1):
                 scale = scale * voxvol[i]
 
         data1 = nii1.get_data()
@@ -318,7 +319,7 @@ class Overlap(BaseInterface):
 
         results = dict(jaccard=[], dice=[])
         results['jaccard'] = np.array(res)
-        results['dice'] = 2.0*results['jaccard'] / (results['jaccard'] + 1.0)
+        results['dice'] = 2.0 * results['jaccard'] / (results['jaccard'] + 1.0)
 
         weights = np.ones((len(volumes1),), dtype=np.float32)
         if self.inputs.weighting != 'none':
@@ -330,17 +331,17 @@ class Overlap(BaseInterface):
         both_data = np.zeros(data1.shape)
         both_data[(data1 - data2) != 0] = 1
 
-        nb.save(nb.Nifti1Image(both_data, nii1.get_affine(),
-                               nii1.get_header()), self.inputs.out_file)
+        nb.save(nb.Nifti1Image(both_data, nii1.affine, nii1.header),
+                self.inputs.out_file)
 
         self._labels = labels
         self._ove_rois = results
-        self._vol_rois = (np.array(volumes1)
-                          - np.array(volumes2)) / np.array(volumes1)
+        self._vol_rois = (np.array(volumes1) -
+                          np.array(volumes2)) / np.array(volumes1)
 
-        self._dice = round(np.sum(weights*results['dice']), 5)
-        self._jaccard = round(np.sum(weights*results['jaccard']), 5)
-        self._volume = np.sum(weights*self._vol_rois)
+        self._dice = round(np.sum(weights * results['dice']), 5)
+        self._jaccard = round(np.sum(weights * results['jaccard']), 5)
+        self._volume = np.sum(weights * self._vol_rois)
 
         return runtime
 
@@ -360,9 +361,9 @@ class Overlap(BaseInterface):
 
 class FuzzyOverlapInputSpec(BaseInterfaceInputSpec):
     in_ref = InputMultiPath(File(exists=True), mandatory=True,
-                             desc='Reference image. Requires the same dimensions as in_tst.')
+                            desc='Reference image. Requires the same dimensions as in_tst.')
     in_tst = InputMultiPath(File(exists=True), mandatory=True,
-                             desc='Test image. Requires the same dimensions as in_ref.')
+                            desc='Test image. Requires the same dimensions as in_ref.')
     weighting = traits.Enum('none', 'volume', 'squared_vol', usedefault=True,
                             desc=('\'none\': no class-overlap weighting is '
                                   'performed. \'volume\': computed class-'
@@ -443,7 +444,7 @@ class FuzzyOverlap(BaseInterface):
 
         weights = weights / np.sum(weights)
 
-        setattr(self, '_jaccard',  np.sum(weights * self._jaccards))
+        setattr(self, '_jaccard', np.sum(weights * self._jaccards))
         setattr(self, '_dice', np.sum(weights * self._dices))
 
         diff = np.zeros(diff_im[0].shape)
@@ -452,8 +453,9 @@ class FuzzyOverlap(BaseInterface):
             ch[msk == 0] = 0
             diff += w * ch
 
-        nb.save(nb.Nifti1Image(diff, nb.load(self.inputs.in_ref[0]).get_affine(),
-                               nb.load(self.inputs.in_ref[0]).get_header()), self.inputs.out_file)
+        nb.save(nb.Nifti1Image(diff, nb.load(self.inputs.in_ref[0]).affine,
+                               nb.load(self.inputs.in_ref[0]).header),
+                self.inputs.out_file)
 
         return runtime
 
@@ -463,8 +465,8 @@ class FuzzyOverlap(BaseInterface):
             outputs[method] = getattr(self, '_' + method)
         # outputs['volume_difference'] = self._volume
         outputs['diff_file'] = os.path.abspath(self.inputs.out_file)
-        outputs['class_fji'] = np.array(self._jaccards).astype(float).tolist();
-        outputs['class_fdi'] = self._dices.astype(float).tolist();
+        outputs['class_fji'] = np.array(self._jaccards).astype(float).tolist()
+        outputs['class_fdi'] = self._dices.astype(float).tolist()
         return outputs
 
 
@@ -529,7 +531,7 @@ class ErrorMap(BaseInterface):
         msk_idxs = np.where(mskvector == 1)
         refvector = ref_data.reshape(-1, comps)[msk_idxs].astype(np.float32)
         tstvector = tst_data.reshape(-1, comps)[msk_idxs].astype(np.float32)
-        diffvector = (refvector-tstvector)
+        diffvector = (refvector - tstvector)
 
         # Scale the difference
         if self.inputs.metric == 'sqeuclidean':
@@ -549,7 +551,7 @@ class ErrorMap(BaseInterface):
 
         errmap = errvectorexp.reshape(mapshape)
 
-        hdr = nii_ref.get_header().copy()
+        hdr = nii_ref.header.copy()
         hdr.set_data_dtype(np.float32)
         hdr['data_type'] = 16
         hdr.set_data_shape(mapshape)
@@ -563,7 +565,7 @@ class ErrorMap(BaseInterface):
         else:
             self._out_file = self.inputs.out_map
 
-        nb.Nifti1Image(errmap.astype(np.float32), nii_ref.get_affine(),
+        nb.Nifti1Image(errmap.astype(np.float32), nii_ref.affine,
                        hdr).to_filename(self._out_file)
 
         return runtime

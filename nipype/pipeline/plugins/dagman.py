@@ -114,9 +114,9 @@ getenv = True
                                     "wrapper_args"])
                 # add required slots to the template
                 template = '%s\n%s\n%s\nqueue\n' % (
-                                '%(initial_specs)s',
-                                template,
-                                '%(override_specs)s')
+                    '%(initial_specs)s',
+                    template,
+                    '%(override_specs)s')
                 batch_dir, name = os.path.split(pyscript)
                 name = '.'.join(name.split('.')[:-1])
                 specs = dict(
@@ -126,13 +126,13 @@ getenv = True
                     nodescript=pyscript,
                     basename=os.path.join(batch_dir, name),
                     override_specs=override_specs
-                    )
-                if not wrapper_cmd is None:
+                )
+                if wrapper_cmd is not None:
                     specs['executable'] = wrapper_cmd
                     specs['nodescript'] = \
                         '%s %s %s' % (wrapper_args % specs,  # give access to variables
-                                  sys.executable,
-                                  pyscript)
+                                      sys.executable,
+                                      pyscript)
                 submitspec = template % specs
                 # write submit spec for this job
                 submitfile = os.path.join(batch_dir,
@@ -150,7 +150,7 @@ getenv = True
                                      % (' '.join([str(i) for i in parents]),
                                         child))
         # hand over DAG to condor_dagman
-        cmd = CommandLine('condor_submit_dag', environ=os.environ.data,
+        cmd = CommandLine('condor_submit_dag', environ=dict(os.environ),
                           terminal_output='allatonce')
         # needs -update_submit or re-running a workflow will fail
         cmd.inputs.args = '%s -update_submit %s' % (self._dagman_args,

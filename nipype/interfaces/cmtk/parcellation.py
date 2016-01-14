@@ -263,17 +263,17 @@ def create_roi(subject_id, subjects_dir, fs_dir, parcellation_name, dilation):
         out_roi = op.abspath('ROI_%s.nii.gz' % parcellation_name)
 
         # update the header
-        hdr = aseg.get_header()
+        hdr = aseg.header
         hdr2 = hdr.copy()
         hdr2.set_data_dtype(np.uint16)
 
         log.info("Save output image to %s" % out_roi)
-        img = nb.Nifti1Image(rois, aseg.get_affine(), hdr2)
+        img = nb.Nifti1Image(rois, aseg.affine, hdr2)
         nb.save(img, out_roi)
 
     iflogger.info("[ DONE ]")
     # dilate cortical regions
-    if (dilation == True):
+    if dilation is True:
         iflogger.info("Dilating cortical regions...")
         # loop throughout all the voxels belonging to the aseg GM volume
         for j in range(xx.size):
@@ -294,7 +294,7 @@ def create_roi(subject_id, subjects_dir, fs_dir, parcellation_name, dilation):
         # store volume eg in ROIv_scale33.nii.gz
         out_roi = op.abspath('ROIv_%s.nii.gz' % parcellation_name)
         iflogger.info("Save output image to %s" % out_roi)
-        img = nb.Nifti1Image(rois, aseg.get_affine(), hdr2)
+        img = nb.Nifti1Image(rois, aseg.affine, hdr2)
         nb.save(img, out_roi)
 
         iflogger.info("[ DONE ]")
@@ -437,7 +437,7 @@ def create_wm_mask(subject_id, subjects_dir, fs_dir, parcellation_name):
 
     # output white matter mask. crop and move it afterwards
     wm_out = op.join(fs_dir, 'mri', 'fsmask_1mm.nii.gz')
-    img = nb.Nifti1Image(wmmask, fsmask.get_affine(), fsmask.get_header())
+    img = nb.Nifti1Image(wmmask, fsmask.affine, fsmask.header)
     iflogger.info("Save white matter mask: %s" % wm_out)
     nb.save(img, wm_out)
 
@@ -463,7 +463,7 @@ def crop_and_move_datasets(subject_id, subjects_dir, fs_dir, parcellation_name, 
 
     ds.append((op.abspath('ROI_%s.nii.gz' % parcellation_name),
                op.abspath('ROI_HR_th.nii.gz')))
-    if(dilation == True):
+    if dilation is True:
         ds.append((op.abspath('ROIv_%s.nii.gz' % parcellation_name),
                    op.abspath('ROIv_HR_th.nii.gz')))
     orig = op.join(fs_dir, 'mri', 'orig', '001.mgz')
@@ -588,7 +588,7 @@ class Parcellate(BaseInterface):
         else:
             outputs['roi_file'] = op.abspath(
                 self._gen_outfilename('nii.gz', 'ROI'))
-        if(self.inputs.dilation == True):
+        if self.inputs.dilation is True:
             outputs['roiv_file'] = op.abspath(self._gen_outfilename(
                 'nii.gz', 'ROIv'))
         outputs['white_matter_mask_file'] = op.abspath('fsmask_1mm.nii.gz')
@@ -597,7 +597,7 @@ class Parcellate(BaseInterface):
         outputs['aseg_file'] = op.abspath('aseg.nii.gz')
         outputs['roi_file_in_structural_space'] = op.abspath(
             'ROI_HR_th.nii.gz')
-        if(self.inputs.dilation == True):
+        if self.inputs.dilation is True:
             outputs['dilated_roi_file_in_structural_space'] = op.abspath(
                 'ROIv_HR_th.nii.gz')
         return outputs

@@ -2,6 +2,7 @@
 from ....testing import assert_equal
 from ..segmentation import Atropos
 
+
 def test_Atropos_inputs():
     input_map = dict(args=dict(argstr='%s',
     ),
@@ -60,12 +61,16 @@ def test_Atropos_inputs():
     ),
     use_mixture_model_proportions=dict(requires=['posterior_formulation'],
     ),
+    use_random_seed=dict(argstr='--use-random-seed %d',
+    usedefault=True,
+    ),
     )
     inputs = Atropos.input_spec()
 
     for key, metadata in list(input_map.items()):
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(inputs.traits()[key], metakey), value
+
 
 def test_Atropos_outputs():
     output_map = dict(classified_image=dict(),
@@ -76,4 +81,3 @@ def test_Atropos_outputs():
     for key, metadata in list(output_map.items()):
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(outputs.traits()[key], metakey), value
-

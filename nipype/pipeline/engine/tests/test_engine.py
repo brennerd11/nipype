@@ -12,9 +12,9 @@ from tempfile import mkdtemp
 
 import networkx as nx
 
-from nipype.testing import (assert_raises, assert_equal, assert_true, assert_false)
-import nipype.interfaces.base as nib
-import nipype.pipeline.engine as pe
+from ....testing import (assert_raises, assert_equal, assert_true, assert_false)
+from ... import engine as pe
+from ....interfaces import base as nib
 
 
 class InputSpec(nib.TraitedSpec):
@@ -178,8 +178,8 @@ def test8():
     pipe._execgraph = pe.generate_expanded_graph(deepcopy(pipe._flatgraph))
     yield assert_equal, len(pipe._execgraph.nodes()), 8
     yield assert_equal, len(pipe._execgraph.edges()), 8
-    edgenum = sorted([(len(pipe._execgraph.in_edges(node)) + \
-                       len(pipe._execgraph.out_edges(node))) \
+    edgenum = sorted([(len(pipe._execgraph.in_edges(node)) +
+                       len(pipe._execgraph.out_edges(node)))
                       for node in pipe._execgraph.nodes()])
     yield assert_true, edgenum[0] > 0
 
@@ -219,7 +219,7 @@ def test_iterable_expansion():
     wf1.connect(node1, 'output1', node2, 'input2')
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
     wf3._flatgraph = wf3._create_flat_graph()
     yield assert_equal, len(pe.generate_expanded_graph(wf3._flatgraph).nodes()), 12
 
@@ -234,7 +234,7 @@ def test_synchronize_expansion():
     wf1.connect(node1, 'output1', node2, 'input2')
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
     wf3._flatgraph = wf3._create_flat_graph()
     # Each expanded graph clone has:
     # 3 node1 expansion nodes and
@@ -258,7 +258,7 @@ def test_synchronize_tuples_expansion():
 
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
 
     wf3._flatgraph = wf3._create_flat_graph()
     # Identical to test_synchronize_expansion
@@ -286,7 +286,7 @@ def test_itersource_expansion():
 
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
 
     wf3._flatgraph = wf3._create_flat_graph()
 
@@ -318,7 +318,7 @@ def test_itersource_synchronize1_expansion():
     wf1.connect(node3, 'output1', node4, 'input1')
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
     wf3._flatgraph = wf3._create_flat_graph()
 
     # each expanded graph clone has:
@@ -351,7 +351,7 @@ def test_itersource_synchronize2_expansion():
     wf1.connect(node3, 'output1', node4, 'input1')
     wf3 = pe.Workflow(name='group')
     for i in [0, 1, 2]:
-        wf3.add_nodes([wf1.clone(name='test%d' %i)])
+        wf3.add_nodes([wf1.clone(name='test%d' % i)])
     wf3._flatgraph = wf3._create_flat_graph()
 
     # each expanded graph clone has:
@@ -540,7 +540,8 @@ def test_mapnode_nested():
     try:
         n2.run()
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_true, error_raised
 
@@ -555,7 +556,7 @@ def test_node_hash():
         return 1
 
     def func2(a):
-        return a+1
+        return a + 1
     n1 = pe.Node(Function(input_names=[],
                           output_names=['a'],
                           function=func1),
@@ -565,7 +566,7 @@ def test_node_hash():
                           function=func2),
                  name='n2')
     w1 = pe.Workflow(name='test')
-    modify = lambda x: x+1
+    modify = lambda x: x + 1
     n1.inputs.a = 1
     w1.connect(n1, ('a', modify), n2, 'a')
     w1.base_dir = wd
@@ -585,7 +586,8 @@ def test_node_hash():
     try:
         w1.run(plugin=RaiseError())
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_true, error_raised
     # yield assert_true, 'Submit called' in e
@@ -599,7 +601,8 @@ def test_node_hash():
     try:
         w1.run(plugin=RaiseError())
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_false, error_raised
     os.chdir(cwd)
@@ -616,7 +619,7 @@ def test_old_config():
         return 1
 
     def func2(a):
-        return a+1
+        return a + 1
     n1 = pe.Node(Function(input_names=[],
                           output_names=['a'],
                           function=func1),
@@ -626,7 +629,7 @@ def test_old_config():
                           function=func2),
                  name='n2')
     w1 = pe.Workflow(name='test')
-    modify = lambda x: x+1
+    modify = lambda x: x + 1
     n1.inputs.a = 1
     w1.connect(n1, ('a', modify), n2, 'a')
     w1.base_dir = wd
@@ -637,7 +640,8 @@ def test_old_config():
     try:
         w1.run(plugin='Linear')
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_false, error_raised
     os.chdir(cwd)
@@ -721,7 +725,8 @@ def test_serial_input():
     try:
         w1.run(plugin='MultiProc')
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_false, error_raised
 
@@ -734,7 +739,8 @@ def test_serial_input():
     try:
         w1.run(plugin='MultiProc')
     except Exception as e:
-        pe.logger.info('Exception: %s' % str(e))
+        from nipype.pipeline.engine.base import logger
+        logger.info('Exception: %s' % str(e))
         error_raised = True
     yield assert_false, error_raised
 

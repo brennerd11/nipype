@@ -356,7 +356,11 @@ class SurfaceTransform(FSCommand):
         outputs = self._outputs().get()
         outputs["out_file"] = self.inputs.out_file
         if not isdefined(outputs["out_file"]):
-            source = self.inputs.source_file
+            if isdefined(self.inputs.source_file):
+                source = self.inputs.source_file
+            else:
+                source = self.inputs.source_annot_file
+
             # Some recon-all files don't have a proper extension (e.g. "lh.thickness")
             # so we have to account for that here
             bad_extensions = [".%s" % e for e in ["area", "mid", "pial", "avg_curv", "curv", "inflated",
@@ -633,7 +637,7 @@ class SurfaceSnapshots(FSCommand):
     def _run_interface(self, runtime):
         if not isdefined(self.inputs.screenshot_stem):
             stem = "%s_%s_%s" % (
-                    self.inputs.subject_id, self.inputs.hemi, self.inputs.surface)
+                self.inputs.subject_id, self.inputs.hemi, self.inputs.surface)
         else:
             stem = self.inputs.screenshot_stem
             stem_args = self.inputs.stem_template_args
@@ -641,7 +645,7 @@ class SurfaceSnapshots(FSCommand):
                 args = tuple([getattr(self.inputs, arg) for arg in stem_args])
                 stem = stem % args
         # Check if the DISPLAY variable is set -- should avoid crashes (might not?)
-        if not "DISPLAY" in os.environ:
+        if "DISPLAY" not in os.environ:
             raise RuntimeError("Graphics are not enabled -- cannot run tksurfer")
         runtime.environ["_SNAPSHOT_STEM"] = stem
         self._write_tcl_script()
@@ -814,7 +818,7 @@ class MRIsConvertInputSpec(FSTraitedSpec):
     # Not really sure why the ./ is necessary but the module fails without it
 
     out_datatype = traits.Enum("ico", "tri", "stl", "vtk", "gii", "mgh", "mgz", mandatory=True,
-                               desc="These file formats are supported:  ASCII:       .asc" \
+                               desc="These file formats are supported:  ASCII:       .asc"
                                "ICO: .ico, .tri GEO: .geo STL: .stl VTK: .vtk GIFTI: .gii MGH surface-encoded 'volume': .mgh, .mgz")
 
 

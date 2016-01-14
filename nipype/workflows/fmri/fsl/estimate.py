@@ -132,7 +132,7 @@ def create_modelfit_workflow(name='modelfit', f_contrasts=False):
         (merge_contrasts, outputspec, [('out', 'zfiles')]),
         (modelestimate, outputspec, [('param_estimates', 'parameter_estimates'),
                                      ('dof_file', 'dof_file')]),
-        ])
+    ])
     if version < 507:
         modelfit.connect([
             (modelgen, conestimate, [('con_file', 'tcon_file'),
@@ -145,7 +145,7 @@ def create_modelfit_workflow(name='modelfit', f_contrasts=False):
                                             ('zfstats', 'in2')]),
             (conestimate, outputspec, [('copes', 'copes'),
                                        ('varcopes', 'varcopes')]),
-            ])
+        ])
     else:
         modelfit.connect([
             (modelgen, modelestimate, [('con_file', 'tcon_file'),
@@ -154,7 +154,7 @@ def create_modelfit_workflow(name='modelfit', f_contrasts=False):
                                               ('zfstats', 'in2')]),
             (modelestimate, outputspec, [('copes', 'copes'),
                                          ('varcopes', 'varcopes')]),
-            ])
+        ])
     return modelfit
 
 
@@ -251,15 +251,15 @@ def create_fixed_effects_flow(name='fixedfx'):
         import nibabel as nb
         import numpy as np
         img = nb.load(cope_files[0])
-        if len(img.get_shape()) > 3:
-            out_data = np.zeros(img.get_shape())
+        if len(img.shape) > 3:
+            out_data = np.zeros(img.shape)
         else:
-            out_data = np.zeros(list(img.get_shape()) + [1])
+            out_data = np.zeros(list(img.shape) + [1])
         for i in range(out_data.shape[-1]):
             dof = np.loadtxt(dof_files[i])
             out_data[:, :, :, i] = dof
         filename = os.path.join(os.getcwd(), 'dof_file.nii.gz')
-        newimg = nb.Nifti1Image(out_data, None, img.get_header())
+        newimg = nb.Nifti1Image(out_data, None, img.header)
         newimg.to_filename(filename)
         return filename
 

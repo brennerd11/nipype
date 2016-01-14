@@ -187,7 +187,7 @@ def cmat(track_file, roi_file, resolution_network_file, matrix_name, matrix_mat_
 
     roi = nb.load(roi_file)
     roiData = roi.get_data()
-    roiVoxelSize = roi.get_header().get_zooms()
+    roiVoxelSize = roi.header.get_zooms()
     (endpoints, endpointsmm) = create_endpoints_array(fib, roiVoxelSize)
 
     # Output endpoint arrays
@@ -385,8 +385,8 @@ def cmat(track_file, roi_file, resolution_network_file, matrix_name, matrix_mat_
     iflogger.info("Filtering tractography - keeping only no orphan fibers")
     finalfibers_fname = op.abspath(endpoint_name + '_streamline_final.trk')
     stats['endpoint_n_fib'] = save_fibers(hdr, fib, finalfibers_fname, final_fibers_idx)
-    stats['endpoints_percent'] = float(stats['endpoint_n_fib'])/float(stats['orig_n_fib'])*100
-    stats['intersections_percent'] = float(stats['intersections_n_fib'])/float(stats['orig_n_fib'])*100
+    stats['endpoints_percent'] = float(stats['endpoint_n_fib']) / float(stats['orig_n_fib']) * 100
+    stats['intersections_percent'] = float(stats['intersections_n_fib']) / float(stats['orig_n_fib']) * 100
 
     out_stats_file = op.abspath(endpoint_name + '_statistics.mat')
     iflogger.info("Saving matrix creation statistics as %s" % out_stats_file)
@@ -706,7 +706,8 @@ class ROIGen(BaseInterface):
                 GMlabelDict['a'] = LUTlabelDict[label][4]
                 labelDict[label] = GMlabelDict
 
-        roi_image = nb.Nifti1Image(niiGM, niiAPARCimg.get_affine(), niiAPARCimg.get_header())
+        roi_image = nb.Nifti1Image(niiGM, niiAPARCimg.affine,
+                                   niiAPARCimg.header)
         iflogger.info('Saving ROI File to {path}'.format(path=roi_file))
         nb.save(roi_image, roi_file)
 

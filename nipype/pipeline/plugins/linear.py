@@ -6,7 +6,7 @@ import os
 
 from .base import (PluginBase, logger, report_crash, report_nodes_not_run,
                    str2bool)
-from ..utils import (nx, dfs_preorder, topological_sort)
+from ..engine.utils import (nx, dfs_preorder, topological_sort)
 
 
 class LinearPlugin(PluginBase):
@@ -55,4 +55,3 @@ class LinearPlugin(PluginBase):
                 if self._status_callback:
                     self._status_callback(node, 'exception')
         report_nodes_not_run(notrun)
-

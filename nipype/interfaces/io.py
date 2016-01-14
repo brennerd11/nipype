@@ -456,7 +456,7 @@ class S3DataSink(DataSink):
             # convert local path to s3 path
             bd_index = path.find(self.inputs.base_directory)
             if bd_index != -1:  # base_directory is in path, maintain directory structure
-                s3path = path[bd_index+len(self.inputs.base_directory):]  # cut out base directory
+                s3path = path[bd_index + len(self.inputs.base_directory):]  # cut out base directory
                 if s3path[0] == os.path.sep:
                     s3path = s3path[1:]
             else:  # base_directory isn't in path, simply place all files in bucket_path folder
@@ -475,7 +475,8 @@ class S3DataSink(DataSink):
 
 class S3DataGrabberInputSpec(DynamicTraitedSpec, BaseInterfaceInputSpec):
     anon = traits.Bool(False, usedefault=True,
-                       desc='Use anonymous connection to s3')
+                       desc='Use anonymous connection to s3.  If this is set to True, boto may print' +
+                            ' a urlopen error, but this does not prevent data from being downloaded.')
     region = traits.Str('us-east-1', usedefault=True,
                         desc='Region of s3 bucket')
     bucket = traits.Str(mandatory=True,
@@ -546,7 +547,7 @@ class S3DataGrabber(IOBase):
         if not isdefined(self.inputs.template_args):
             self.inputs.template_args = {}
         for key in outfields:
-            if not key in self.inputs.template_args:
+            if key not in self.inputs.template_args:
                 if infields:
                     self.inputs.template_args[key] = [infields]
                 else:
@@ -656,14 +657,17 @@ class S3DataGrabber(IOBase):
         # Outputs are currently stored as locations on S3.
         # We must convert to the local location specified
         # and download the files.
-        for key in outputs:
-            if type(outputs[key]) == list:
-                paths = outputs[key]
-                for i in range(len(paths)):
-                    path = paths[i]
+        for key,val in outputs.iteritems():
+            #This will basically be either list-like or string-like:
+            #if it has the __iter__ attribute, it's list-like (list,
+            #tuple, numpy array) and we iterate through each of its
+            #values. If it doesn't, it's string-like (string,
+            #unicode), and we convert that value directly.
+            if hasattr(val,'__iter__'):
+                for i,path in enumerate(val):
                     outputs[key][i] = self.s3tolocal(path, bkt)
-            elif type(outputs[key]) == str:
-                outputs[key] = self.s3tolocal(outputs[key], bkt)
+            else:
+                outputs[key] = self.s3tolocal(val, bkt)
 
         return outputs
 
@@ -789,7 +793,7 @@ class DataGrabber(IOBase):
         if not isdefined(self.inputs.template_args):
             self.inputs.template_args = {}
         for key in outfields:
-            if not key in self.inputs.template_args:
+            if key not in self.inputs.template_args:
                 if infields:
                     self.inputs.template_args[key] = [infields]
                 else:
@@ -1100,7 +1104,7 @@ class DataFinder(IOBase):
                 return
         # Check if we can match the path
         match = self.match_regex.search(target_path)
-        if not match is None:
+        if match is not None:
             match_dict = match.groupdict()
             if self.result is None:
                 self.result = {'out_paths': []}
@@ -1156,8 +1160,7 @@ class DataFinder(IOBase):
                         full_path = os.path.join(curr_dir, infile)
                         self._match_path(full_path)
         if (self.inputs.unpack_single and
-                len(self.result['out_paths']) == 1
-                ):
+                len(self.result['out_paths']) == 1):
             for key, vals in self.result.items():
                 self.result[key] = vals[0]
         else:
@@ -1578,7 +1581,7 @@ class XNATSinkInputSpec(DynamicTraitedSpec, BaseInterfaceInputSpec):
                         desc=('Option to share the subjects from the original project'
                               'instead of creating new ones when possible - the created '
                               'experiments are then shared back to the original project'
-              ),
+                              ),
                         usedefault=True)
 
     def __setattr__(self, key, value):

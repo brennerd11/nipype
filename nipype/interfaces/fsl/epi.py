@@ -105,8 +105,8 @@ class PrepareFieldmap(FSLCommand):
         if runtime.returncode == 0:
             out_file = self.inputs.out_fieldmap
             im = nib.load(out_file)
-            dumb_img = nib.Nifti1Image(np.zeros(im.get_shape()),
-                                       im.get_affine(), im.get_header())
+            dumb_img = nib.Nifti1Image(np.zeros(im.shape), im.affine,
+                                       im.header)
             out_nii = nib.funcs.concat_images((im, dumb_img))
             nib.save(out_nii, out_file)
 
@@ -663,7 +663,7 @@ class EpiReg(FSLCommand):
             outputs['fmap_epi'] = os.path.join(os.getcwd(),
                                                self.inputs.out_base + '_fieldmaprads2epi.nii.gz')
             outputs['fmap_str'] = os.path.join(os.getcwd(),
-                                               self.inputs.out_base + '_fieldmaprads2str.ni    `i.gz')
+                                               self.inputs.out_base + '_fieldmaprads2str.nii.gz')
             outputs['fmapmag_str'] = os.path.join(os.getcwd(),
                                                   self.inputs.out_base + '_fieldmap2str.nii.gz')
             outputs['shiftmap'] = os.path.join(os.getcwd(),

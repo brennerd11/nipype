@@ -2,6 +2,7 @@
 from ....testing import assert_equal
 from ..preprocess import ReconAll
 
+
 def test_ReconAll_inputs():
     input_map = dict(T1_files=dict(argstr='-i %s...',
     ),
@@ -35,12 +36,16 @@ def test_ReconAll_inputs():
     ),
     terminal_output=dict(nohash=True,
     ),
+    use_T2=dict(argstr='-T2pial',
+    min_ver='5.3.0',
+    ),
     )
     inputs = ReconAll.input_spec()
 
     for key, metadata in list(input_map.items()):
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(inputs.traits()[key], metakey), value
+
 
 def test_ReconAll_outputs():
     output_map = dict(BA_stats=dict(altkey='BA',
@@ -127,4 +132,3 @@ def test_ReconAll_outputs():
     for key, metadata in list(output_map.items()):
         for metakey, value in list(metadata.items()):
             yield assert_equal, getattr(outputs.traits()[key], metakey), value
-

@@ -378,7 +378,7 @@ class MRIConvert(FSCommand):
         outputs = self.output_spec().get()
         outfile = self._get_outfilename()
         if isdefined(self.inputs.split) and self.inputs.split:
-            size = load(self.inputs.in_file).get_shape()
+            size = load(self.inputs.in_file).shape
             if len(size) == 3:
                 tp = 1
             else:
@@ -398,7 +398,7 @@ class MRIConvert(FSCommand):
         if isdefined(self.inputs.out_type):
             if self.inputs.out_type in ['spm', 'analyze']:
                 # generate all outputs
-                size = load(self.inputs.in_file).get_shape()
+                size = load(self.inputs.in_file).shape
                 if len(size) == 3:
                     tp = 1
                 else:
@@ -609,7 +609,9 @@ class ReconAllInputSpec(CommandLineInputSpec):
     T1_files = InputMultiPath(File(exists=True), argstr='-i %s...',
                               desc='name of T1 file to process')
     T2_file = File(exists=True, argstr="-T2 %s", min_ver='5.3.0',
-                   desc='Use a T2 image to refine the cortical surface')
+                   desc='Convert T2 image to orig directory')
+    use_T2 = traits.Bool(argstr="-T2pial", min_ver='5.3.0',
+                         desc='Use converted T2 to refine the cortical surface')
     openmp = traits.Int(argstr="-openmp %d",
                         desc="Number of processors to use in parallel")
     subjects_dir = Directory(exists=True, argstr='-sd %s', hash_files=False,
@@ -789,13 +791,13 @@ class ReconAll(CommandLine):
             if all([os.path.exists(os.path.join(subjects_dir,
                                                 self.inputs.subject_id, f)) for
                     f in outfiles]):
-                flags.append('-no%s' %step)
+                flags.append('-no%s' % step)
                 if idx > 4:
                     directive = 'autorecon2'
                 elif idx > 23:
                     directive = 'autorecon3'
             else:
-                flags.append('-%s' %step)
+                flags.append('-%s' % step)
         cmd = cmd.replace(' -%s ' % self.inputs.directive, ' -%s ' % directive)
         cmd += ' ' + ' '.join(flags)
         iflogger.info('resume recon-all : %s' % cmd)
@@ -1003,8 +1005,8 @@ class ApplyVolTransform(FSCommand):
     def _get_outfile(self):
         outfile = self.inputs.transformed_file
         if not isdefined(outfile):
-            if self.inputs.inverse == True:
-                if self.inputs.fs_target == True:
+            if self.inputs.inverse is True:
+                if self.inputs.fs_target is True:
                     src = 'orig.mgz'
                 else:
                     src = self.inputs.target_file

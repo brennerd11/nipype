@@ -39,8 +39,8 @@ class FitGLMInputSpec(BaseInterfaceInputSpec):
                                   "With Derivative' or 'FIR'"), usedefault=True)
     drift_model = traits.Enum("Cosine", "Polynomial", "Blank",
                               desc=("string that specifies the desired drift "
-                                      "model, to be chosen among 'Polynomial', "
-                                      "'Cosine', 'Blank'"), usedefault=True)
+                                    "model, to be chosen among 'Polynomial', "
+                                    "'Cosine', 'Blank'"), usedefault=True)
     TR = traits.Float(mandatory=True)
     model = traits.Enum("ar1", "spherical",
                         desc=("autoregressive mode is available only for the "
@@ -122,7 +122,7 @@ class FitGLM(BaseInterface):
         for i in range(len(reg_names)):
             reg_vals[:, i] = np.array(session_info[0]['regress'][i]['val']).reshape(1, -1)
 
-        frametimes = np.linspace(0, (nscans-1)*self.inputs.TR, nscans)
+        frametimes = np.linspace(0, (nscans - 1) * self.inputs.TR, nscans)
 
         conditions = []
         onsets = []
@@ -130,9 +130,9 @@ class FitGLM(BaseInterface):
 
         for i, cond in enumerate(session_info[0]['cond']):
             onsets += cond['onset']
-            conditions += [cond['name']]*len(cond['onset'])
+            conditions += [cond['name']] * len(cond['onset'])
             if len(cond['duration']) == 1:
-                duration += cond['duration']*len(cond['onset'])
+                duration += cond['duration'] * len(cond['onset'])
             else:
                 duration += cond['duration']
 
@@ -146,10 +146,10 @@ class FitGLM(BaseInterface):
                                                        add_reg_names=reg_names
                                                        )
         if self.inputs.normalize_design_matrix:
-            for i in range(len(self._reg_names)-1):
+            for i in range(len(self._reg_names) - 1):
                 design_matrix[:, i] = ((design_matrix[:, i] -
-                                       design_matrix[:, i].mean()) /
-                                      design_matrix[:, i].std())
+                                        design_matrix[:, i].mean()) /
+                                       design_matrix[:, i].std())
 
         if self.inputs.plot_design_matrix:
             import pylab
@@ -164,19 +164,19 @@ class FitGLM(BaseInterface):
         self._beta_file = os.path.abspath("beta.nii")
         beta = np.zeros(mask.shape + (glm.beta.shape[0],))
         beta[mask, :] = glm.beta.T
-        nb.save(nb.Nifti1Image(beta, nii.get_affine()), self._beta_file)
+        nb.save(nb.Nifti1Image(beta, nii.affine), self._beta_file)
 
         self._s2_file = os.path.abspath("s2.nii")
         s2 = np.zeros(mask.shape)
         s2[mask] = glm.s2
-        nb.save(nb.Nifti1Image(s2, nii.get_affine()), self._s2_file)
+        nb.save(nb.Nifti1Image(s2, nii.affine), self._s2_file)
 
         if self.inputs.save_residuals:
             explained = np.dot(design_matrix, glm.beta)
             residuals = np.zeros(mask.shape + (nscans,))
             residuals[mask, :] = timeseries - explained.T
             self._residuals_file = os.path.abspath("residuals.nii")
-            nb.save(nb.Nifti1Image(residuals, nii.get_affine()), self._residuals_file)
+            nb.save(nb.Nifti1Image(residuals, nii.affine), self._residuals_file)
 
         self._nvbeta = glm.nvbeta
         self._dof = glm.dof
@@ -186,7 +186,7 @@ class FitGLM(BaseInterface):
             self._a_file = os.path.abspath("a.nii")
             a = np.zeros(mask.shape)
             a[mask] = glm.a.squeeze()
-            nb.save(nb.Nifti1Image(a, nii.get_affine()), self._a_file)
+            nb.save(nb.Nifti1Image(a, nii.affine), self._a_file)
         self._model = glm.model
         self._method = glm.method
 
@@ -295,19 +295,19 @@ class EstimateContrast(BaseInterface):
             stat_map = np.zeros(mask.shape)
             stat_map[mask] = est_contrast.stat().T
             stat_map_file = os.path.abspath(name + "_stat_map.nii")
-            nb.save(nb.Nifti1Image(stat_map, nii.get_affine()), stat_map_file)
+            nb.save(nb.Nifti1Image(stat_map, nii.affine), stat_map_file)
             self._stat_maps.append(stat_map_file)
 
             p_map = np.zeros(mask.shape)
             p_map[mask] = est_contrast.pvalue().T
             p_map_file = os.path.abspath(name + "_p_map.nii")
-            nb.save(nb.Nifti1Image(p_map, nii.get_affine()), p_map_file)
+            nb.save(nb.Nifti1Image(p_map, nii.affine), p_map_file)
             self._p_maps.append(p_map_file)
 
             z_map = np.zeros(mask.shape)
             z_map[mask] = est_contrast.zscore().T
             z_map_file = os.path.abspath(name + "_z_map.nii")
-            nb.save(nb.Nifti1Image(z_map, nii.get_affine()), z_map_file)
+            nb.save(nb.Nifti1Image(z_map, nii.affine), z_map_file)
             self._z_maps.append(z_map_file)
 
         return runtime
@@ -318,4 +318,3 @@ class EstimateContrast(BaseInterface):
         outputs["p_maps"] = self._p_maps
         outputs["z_maps"] = self._z_maps
         return outputs
-

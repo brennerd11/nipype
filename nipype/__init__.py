@@ -17,6 +17,12 @@ from distutils.version import LooseVersion
 
 from .fixes.numpy.testing import nosetester
 
+try:
+    import faulthandler
+    faulthandler.enable()
+except (ImportError,IOError) as e:
+    pass
+
 
 class _NoseTester(nosetester.NoseTester):
     """ Subclass numpy's NoseTester to add doctests by default
@@ -55,7 +61,7 @@ def _test_local_install():
         imported locally is a bad idea.
     """
     if os.getcwd() == os.sep.join(
-                            os.path.abspath(__file__).split(os.sep)[:-2]):
+            os.path.abspath(__file__).split(os.sep)[:-2]):
         import warnings
         warnings.warn('Running the tests from the install directory may '
                       'trigger some failures')
